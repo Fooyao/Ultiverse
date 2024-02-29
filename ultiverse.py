@@ -453,13 +453,17 @@ class mission:
                     logger.success(f'[{self.address}] 任务已完成')
                     return None
                 for task in res.json()['data']['actions']:
-                    print(task)
                     if task['tag'][0]['type'] == 'twitter':
                         if task['isFinished']:
                             logger.success(f'[{self.address}] {task["name"]} 已完成')
                             continue
                         await self.twitter_check(task['name'], task['taskId'], task['id'], task['type'], task['data'])
-
+                    if task['tag'][0]['type'] == 'discord':
+                        if task['isFinished']:
+                            logger.success(f'[{self.address}] {task["name"]} 已完成')
+                            continue
+                        if not await self.discord_check():
+                            return False
                 return await self.claim(task_hash)
             logger.error(f'[{self.address}] 获取任务失败：{res.text}')
             return False
@@ -486,8 +490,11 @@ class mission:
             json_data.update(json.loads(task_data))
             res = await self.http.post('https://mission.ultiverse.io/api/twitter/check', json=json_data)
             if 'success' in res.text and res.json()['success']:
-                logger.success(f'[{self.address}] {task_name} 成功，等待70s后继续下一个任务')
-                await asyncio.sleep(70)
+                sleep = 70
+                if task_id == 1208 or task_id == 1207:
+                    sleep = 10
+                logger.success(f'[{self.address}] {task_name} 成功，等待{sleep}s后继续下一个任务')
+                await asyncio.sleep(sleep)
                 return True
             logger.error(f'[{self.address}] {task_name} 失败：{res.text}')
             return False
@@ -496,12 +503,13 @@ class mission:
             return False
 
     async def discord_check(self):
+        await asyncio.sleep(10)
         try:
             json_data = {"type": 20, "taskId": 525, "actionId": 1205, "redirect_uri": "https://mission.ultiverse.io", "channel": "947538592018878484"}
             res = await self.http.post('https://mission.ultiverse.io/api/dc/check', json=json_data)
             if 'success' in res.text and res.json()['success']:
-                logger.success(f'[{self.address}] DC进群 成功')
-                await asyncio.sleep(70)
+                logger.success(f'[{self.address}] DC进群 成功, 等待10s后继续下一个任务')
+                await asyncio.sleep(10)
                 return True
             logger.error(f'[{self.address}] DC进群 失败：{res.text}')
             return False
@@ -544,7 +552,7 @@ class mission:
 
 
 async def main():
-    twitter_account = "a_ultivers42595----pafCUJBlL7Jpc2ikYr0j----pdvmpyjv@fmailler.net----pvrbudjdS3300!----0c2c57549a95ea29b3df498324daa4a009884cfb----1762278681118937088-lAwj4QCczGsn7kf2wKlZoom7CaIpUE----sH2aeFreifPMLqMuPIdDUYcDjJyTl5m9QnXXaPC3xPumt"
+    twitter_account = "Aeroscythe85094----huq8dbBdfcwjAxFPiahA----agyigltx@fmailler.com----auilhruhY4844!----e91dafd9ae3ba909cd52392557c5aad5e5641096----1762336337917538304-v6PFKjaFfJe5YKV0choMCS6O5KTYTt----E3q81qfSwPvomT1zHdMB73HhLco2VHRh5ep7UlSCFfSuV"
     # hdd.cm购买的twitter账号
 
     twitter_account_list = twitter_account.split("----")
